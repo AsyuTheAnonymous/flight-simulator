@@ -35,8 +35,8 @@ export function ManualCameraOffset({ targetRef, controlsRef }: ManualCameraOffse
           // Update the stored last position
           lastTargetPos.current.copy(target.position);
 
-          // It might be necessary to call controls.update() after manual adjustments
-          // controlsRef.current.update(); // Test if needed
+          // Force OrbitControls to update its internal state after manual adjustments
+          controlsRef.current.update();
       }
     } else if (targetRef.current) {
         // Fallback if controls aren't ready yet, store current pos

@@ -39,7 +39,7 @@ export function useFlightControls(): FlightControls {
     return {
       forwardMovement: movement['KeyW'] ? 1 : movement['KeyS'] ? -1 : 0,
       strafeMovement: movement['KeyD'] ? 1 : movement['KeyA'] ? -1 : 0, // D=Right(+1), A=Left(-1)
-      verticalMovement: movement['KeyQ'] ? 1 : movement['KeyE'] ? -1 : 0, // Q=Up(+1), E=Down(-1)
+      verticalMovement: movement['Space'] ? 1 : movement['KeyE'] ? -1 : 0, // Space=Up(+1), E=Down(-1)
     };
   }, [movement]);
 
