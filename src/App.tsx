@@ -1,11 +1,23 @@
 import React, { useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber'; // Add useFrame back
-// Remove PointerLockControls, keep Stars etc.
-import { Stars, Plane as DreiPlane, Instances, Instance } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+// Add OrbitControls back, remove ChaseCamera import
+import { OrbitControls, Stars, Plane as DreiPlane, Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
 import UFOComponent from './components/Plane';
 import { Tree } from './components/Tree';
-import { ChaseCamera } from './components/ChaseCamera'; // Re-import ChaseCamera
+// import { ChaseCamera } from './components/ChaseCamera';
+
+// Re-add ControlsUpdater component
+function ControlsUpdater({ controlsRef, targetRef }: { controlsRef: React.RefObject<any>, targetRef: React.RefObject<THREE.Group> }) {
+  useFrame(() => {
+    if (controlsRef.current && targetRef.current) {
+      // Update the target of OrbitControls to the plane's position
+      controlsRef.current.target.copy(targetRef.current.position);
+      controlsRef.current.update();
+    }
+  });
+  return null;
+}
 
 // Component to render trees using instancing
 function Trees() {
@@ -63,7 +75,8 @@ function Trees() {
 
 
 function App() {
-  const ufoRef = useRef<THREE.Group>(null!); // Re-add ufoRef
+  const ufoRef = useRef<THREE.Group>(null!);
+  const controlsRef = useRef<any>(null!); // Re-add OrbitControls ref
 
   return (
     // Remove cursor style
@@ -98,9 +111,16 @@ function App() {
         {/* Use the UFO component and pass the ref */}
         <UFOComponent ref={ufoRef} position={[0, 0.5, 0]} />
 
-        {/* Add the ChaseCamera component */}
-        <ChaseCamera targetRef={ufoRef} />
-        {/* PointerLockControls removed */}
+        {/* Add OrbitControls */}
+        <OrbitControls
+          ref={controlsRef}
+          minDistance={5}
+          maxDistance={50}
+          // enablePan={false} // Allow panning again
+        />
+
+        {/* Add the component to update controls target */}
+        <ControlsUpdater controlsRef={controlsRef} targetRef={ufoRef} />
       </Canvas>
     </div>
   );
