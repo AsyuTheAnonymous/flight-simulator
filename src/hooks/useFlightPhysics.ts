@@ -1,14 +1,13 @@
 import { useRef } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber'; // Remove useThree
+import { useFrame, useThree } from '@react-three/fiber'; // Add useThree back
 import { useControls } from 'leva';
 
-// Define the correct structure for control inputs expected by this hook
+// Define the structure for camera-relative movement controls (matching useFlightControls.ts)
 export interface FlightControls {
-  forwardMovement: number; // -1 (backward), 0, or 1 (forward)
-  roll: number; // -1, 0, or 1 (representing target direction)
-  pitch: number; // -1, 0, or 1
-  verticalMovement: number; // -1 (down), 0, or 1 (up)
+  forwardMovement: number; // -1 (S), 0, or 1 (W)
+  strafeMovement: number;  // -1 (A), 0, or 1 (D)
+  verticalMovement: number; // -1 (E), 0, or 1 (Q)
 }
 
 // Define Leva schema for physics/movement parameters
@@ -25,59 +24,43 @@ export function useFlightPhysics(
   planeRef: React.RefObject<THREE.Group>, // Use planeRef again
   controls: FlightControls // Expect the correct FlightControls interface
 ) {
-  // Get parameters from Leva
+  // Get parameters from Leva (only need move speeds now)
   const {
       forwardMoveSpeed,
       verticalMoveSpeed,
-      maxRotateSpeed,
-      rotationAcceleration,
-      rotationalDamping
-  } = useControls('Movement & Rotation', physicsSchema); // Updated Leva group name
-  // Remove camera ref
+      // maxRotateSpeed, rotationAcceleration, rotationalDamping // Remove rotational params
+  } = useControls('Movement', physicsSchema); // Simplified Leva group name
+  const { camera } = useThree(); // Get camera reference
 
-  // Add back rotational velocity refs
-  const rollVelocity = useRef(0);
-  const pitchVelocity = useRef(0);
+  // Remove rotational velocity refs
 
   useFrame((state, delta) => {
-    if (!planeRef.current) return; // Use planeRef
+    if (!planeRef.current || !camera) return; // Use planeRef and add camera guard
 
-    const ufo = planeRef.current; // Use planeRef
+    const ufo = planeRef.current;
     const dt = delta;
 
-    // --- Rotational Velocity Updates (Roll & Pitch) ---
-    const updateRotationalVelocity = (
-        currentVelocityRef: React.MutableRefObject<number>,
-        targetDirection: number // -1, 0, or 1
-    ) => {
-        const targetVelocity = targetDirection * maxRotateSpeed;
-        if (targetVelocity !== currentVelocityRef.current) {
-            const direction = Math.sign(targetVelocity - currentVelocityRef.current);
-            currentVelocityRef.current += direction * rotationAcceleration * dt;
-            if (direction > 0) currentVelocityRef.current = Math.min(currentVelocityRef.current, targetVelocity);
-            else currentVelocityRef.current = Math.max(currentVelocityRef.current, targetVelocity);
-        }
-        if (targetDirection === 0) {
-            currentVelocityRef.current *= Math.pow(rotationalDamping, dt * 60);
-            if (Math.abs(currentVelocityRef.current) < 0.01) currentVelocityRef.current = 0;
-        }
-    };
+    // --- Calculate Movement Direction based on Camera ---
+    const moveDirection = new THREE.Vector3();
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
 
-    updateRotationalVelocity(rollVelocity, controls.roll);
-    updateRotationalVelocity(pitchVelocity, controls.pitch);
+    const forwardDir = new THREE.Vector3(cameraDirection.x, 0, cameraDirection.z).normalize();
+    const rightDir = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), forwardDir).normalize();
 
-    // --- Apply Transformations ---
-    // Rotation (Roll and Pitch only)
-    ufo.rotateZ(rollVelocity.current * dt);
-    ufo.rotateX(pitchVelocity.current * dt);
+    // Apply movement based on controls input (-1, 0, or 1)
+    moveDirection.addScaledVector(forwardDir, controls.forwardMovement); // W/S
+    moveDirection.addScaledVector(rightDir, controls.strafeMovement);   // A/D
+    moveDirection.y += controls.verticalMovement;                      // Q/E
 
-    // Translation (Direct W/S and Q/E)
-    if (controls.forwardMovement !== 0) {
-        ufo.translateZ(-controls.forwardMovement * forwardMoveSpeed * dt);
+    // Normalize if moving diagonally
+    if (moveDirection.lengthSq() > 0) {
+        moveDirection.normalize();
     }
-    if (controls.verticalMovement !== 0) {
-      ufo.position.y += controls.verticalMovement * verticalMoveSpeed * dt;
-    }
+
+    // --- Apply Translation ---
+    // Use combined move speed for now, adjustable via leva
+    ufo.position.addScaledVector(moveDirection, forwardMoveSpeed * dt); // Using forwardMoveSpeed for all directions
 
     // --- Ground Collision ---
     if (ufo.position.y < 0.5) {

@@ -1,11 +1,9 @@
 import { useEffect, useState, useMemo } from 'react';
-// Import the FlightControls interface (assuming it exists in useFlightPhysics or define here)
-// Let's define it here for clarity if useFlightPhysics is removed/changed
+// Define the structure for camera-relative movement controls
 export interface FlightControls {
-  forwardMovement: number; // -1 (backward), 0, or 1 (forward)
-  roll: number; // -1, 0, or 1 (representing target direction)
-  pitch: number; // -1, 0, or 1
-  verticalMovement: number; // -1 (down), 0, or 1 (up)
+  forwardMovement: number; // -1 (S), 0, or 1 (W)
+  strafeMovement: number;  // -1 (A), 0, or 1 (D)
+  verticalMovement: number; // -1 (E), 0, or 1 (Q)
 }
 
 
@@ -37,14 +35,13 @@ export function useFlightControls(): FlightControls {
 
   // Derive the structured controls object from the key map
   const controls = useMemo((): FlightControls => {
-    // Map keys back to the FlightControls structure
+    // Map WASDQE keys to the new structure
     return {
       forwardMovement: movement['KeyW'] ? 1 : movement['KeyS'] ? -1 : 0,
-      roll: movement['KeyA'] ? 1 : movement['KeyD'] ? -1 : 0,
-      pitch: movement['ArrowUp'] ? 1 : movement['ArrowDown'] ? -1 : 0,
-      verticalMovement: movement['KeyQ'] ? 1 : movement['KeyE'] ? -1 : 0,
+      strafeMovement: movement['KeyD'] ? 1 : movement['KeyA'] ? -1 : 0, // D=Right(+1), A=Left(-1)
+      verticalMovement: movement['KeyQ'] ? 1 : movement['KeyE'] ? -1 : 0, // Q=Up(+1), E=Down(-1)
     };
-  }, [movement]); // Recalculate only when movement state changes
+  }, [movement]);
 
   return controls;
 }
