@@ -1,23 +1,67 @@
-import React, { useRef } from 'react'; // Add useRef back
+import React, { useRef, useEffect } from 'react'; // Add useEffect
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
-// Import the new controls hook, remove the old one
-import { useFlightControls } from '../hooks/useFlightControls';
-// Import the physics hook (will be used later)
-import { useFlightPhysics } from '../hooks/useFlightPhysics';
-import { AircraftModel } from './AircraftModel'; // Import the model component
+import { useFrame, useThree } from '@react-three/fiber'; // Add useThree
+// Import the directional controls hook
+import { useDirectionalControls } from '../hooks/useFlightControls'; // Corrected hook name
+// Remove physics hook import again
+// import { useFlightPhysics } from '../hooks/useFlightPhysics';
+import { AircraftModel } from './AircraftModel';
 
-// Basic placeholder for the plane model
-// Wrap with forwardRef to accept the ref from App.tsx
-const Plane = React.forwardRef<THREE.Group, any>((props, ref) => {
-  // Directly use the forwarded ref. App.tsx guarantees it's provided.
+// Component remains named UFO but uses flight controls/physics
+const UFO = React.forwardRef<THREE.Group, any>((props, ref) => {
+  // Use the forwarded ref again for physics hook
   const meshRef = ref as React.RefObject<THREE.Group>;
-  // Use the new controls hook
-  const controls = useFlightControls();
+  // Use the directional controls hook
+  const controls = useDirectionalControls();
+  const { camera } = useThree(); // Get camera reference
 
-  // Call the physics hook to apply physics based on controls
-  // This hook now handles all the state refs and useFrame logic internally
-  useFlightPhysics(meshRef, controls);
+  // Remove physics hook call
+  // useFlightPhysics(meshRef, controls);
+
+  // Add useFrame back for movement logic
+  useFrame((state, delta) => {
+    if (!meshRef.current) return;
+
+    const ufo = meshRef.current;
+    const dt = delta;
+    const moveSpeed = 5; // Adjust speed as needed
+
+    // --- Calculate Movement Direction based on Camera ---
+    const moveDirection = new THREE.Vector3();
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection); // Get camera's forward direction
+
+    // Project camera direction onto the horizontal plane (XZ)
+    const forwardDir = new THREE.Vector3(cameraDirection.x, 0, cameraDirection.z).normalize();
+    // Calculate the right direction (90 degrees rotation on Y axis)
+    const rightDir = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), forwardDir).normalize();
+
+    // Apply movement based on keys relative to camera
+    if (controls.forward) moveDirection.add(forwardDir);
+    if (controls.backward) moveDirection.sub(forwardDir);
+    if (controls.left) moveDirection.sub(rightDir); // Subtract right to go left
+    if (controls.right) moveDirection.add(rightDir);
+
+    // Apply vertical movement directly
+    if (controls.up) moveDirection.y += 1;
+    if (controls.down) moveDirection.y -= 1;
+
+    // Normalize the final direction vector if it has magnitude
+    if (moveDirection.lengthSq() > 0) {
+        moveDirection.normalize();
+    }
+
+    // --- Apply Translation ---
+    // Move instantly based on direction and speed
+    ufo.position.addScaledVector(moveDirection, moveSpeed * dt);
+
+    // --- Ground Collision (Simplified) ---
+     if (ufo.position.y < 0.5) {
+        ufo.position.y = 0.5;
+    }
+
+  });
+
 
   // The component now only needs to render the visual model
   return (
@@ -27,9 +71,9 @@ const Plane = React.forwardRef<THREE.Group, any>((props, ref) => {
       <AircraftModel />
     </group>
   );
-}); // Close forwardRef
+});
 
-export default Plane;
+export default UFO; // Export renamed component
 
 // Add empty export to satisfy --isolatedModules
 export {};

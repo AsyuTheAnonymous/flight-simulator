@@ -1,12 +1,21 @@
 import { useEffect, useState, useMemo } from 'react';
-import { FlightControls } from './useFlightPhysics'; // Import the interface
+
+// Define interface for simple directional flags
+export interface DirectionalControls {
+  forward: boolean;
+  backward: boolean;
+  left: boolean;
+  right: boolean;
+  up: boolean;
+  down: boolean;
+}
 
 interface KeyMap {
   [key: string]: boolean;
 }
 
-// Renamed hook and changed return type
-export function useFlightControls(): FlightControls {
+// Update hook name and return type
+export function useDirectionalControls(): DirectionalControls {
   const [movement, setMovement] = useState<KeyMap>({});
 
   useEffect(() => {
@@ -27,17 +36,16 @@ export function useFlightControls(): FlightControls {
     };
   }, []);
 
-  // Derive the structured controls object from the key map
-  const controls = useMemo((): FlightControls => {
-    // Cast to 'any' temporarily until FlightControls interface is updated
+  // Derive the boolean flags from the key map
+  const controls = useMemo((): DirectionalControls => {
     return {
-      // Replace throttleChange with forwardMovement based on W/S
-      forwardMovement: movement['KeyW'] ? 1 : movement['KeyS'] ? -1 : 0,
-      roll: movement['KeyA'] ? 1 : movement['KeyD'] ? -1 : 0,
-      pitch: movement['ArrowUp'] ? 1 : movement['ArrowDown'] ? -1 : 0,
-      verticalMovement: movement['KeyQ'] ? 1 : movement['KeyE'] ? -1 : 0,
-      // Remove yaw/throttleChange placeholders
-    } as any;
+      forward: !!movement['KeyW'],
+      backward: !!movement['KeyS'],
+      left: !!movement['KeyA'],
+      right: !!movement['KeyD'],
+      up: !!movement['KeyQ'], // Q for Up
+      down: !!movement['KeyE'], // E for Down
+    };
   }, [movement]); // Recalculate only when movement state changes
 
   return controls;
