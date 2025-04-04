@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber'; // Add useThree back
 import { useControls } from 'leva';
@@ -34,9 +34,9 @@ export function useFlightPhysics(
       upwardForce,
       launchForce,
       gravity,
-      maxRotateSpeed,
-      rotationAcceleration,
-      rotationalDamping,
+      // maxRotateSpeed, // Removed
+      // rotationAcceleration, // Removed
+      // rotationalDamping, // Removed
       verticalVelocityDamping,
       // Remove unused rotational params from leva destructuring
       // maxRotateSpeed, rotationAcceleration, rotationalDamping

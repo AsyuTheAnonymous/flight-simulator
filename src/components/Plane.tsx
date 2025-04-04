@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'; // Add useRef back
+import React from 'react'; // Removed useRef
 import * as THREE from 'three';
 // Remove useFrame/useThree imports as they are handled by the hook
 // import { useFrame, useThree } from '@react-three/fiber';

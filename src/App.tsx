@@ -1,10 +1,10 @@
 import React, { useRef, useMemo, useState } from 'react'; // Import useState
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas } from '@react-three/fiber'; // Removed useFrame
 // Add Sky back
-import { OrbitControls, Sky, Stars, Plane as DreiPlane, Instances, Instance } from '@react-three/drei';
+import { OrbitControls, Sky, Stars, Plane as DreiPlane } from '@react-three/drei'; // Removed Instances, Instance
 import * as THREE from 'three';
 import UFOComponent from './components/Plane';
-import { Tree } from './components/Tree';
+// Removed Tree import
 // import { ChaseCamera } from './components/ChaseCamera';
 import { ManualCameraOffset } from './components/ManualCameraOffset';
 import { Cornfield } from './components/Cornfield';
@@ -13,65 +13,13 @@ import { CitySkyline } from './components/CitySkyline'; // Import City
 
 // Remove ControlsUpdater component definition
 
-// Component to render trees using instancing
-function Trees() {
-  const count = 200; // Number of trees
-  const range = 200; // Area to scatter trees over
-
-  // Generate random positions for trees, memoized for performance
-  const treeData = useMemo(() => {
-    return Array.from({ length: count }).map(() => ({
-      position: new THREE.Vector3(
-        (Math.random() - 0.5) * range,
-        -1, // Position trees on the ground plane (y = -1)
-        (Math.random() - 0.5) * range
-      ),
-      scale: 1 + Math.random() * 1.5, // Random scale
-      rotation: Math.random() * Math.PI, // Random rotation
-    }));
-  }, [count, range]);
-
-  // Define colors outside the return for clarity
-  const trunkColor = '#8B4513'; // Brown
-  const leavesColor = '#228B22'; // Forest Green
-
-  return (
-    <>
-      {/* Instances for Trunks */}
-      <Instances castShadow limit={count} range={range * 2}> {/* Add castShadow */}
-        <cylinderGeometry args={[0.1, 0.2, 1, 8]} />
-        <meshStandardMaterial color={trunkColor} />
-        {treeData.map((data, i) => (
-          <Instance
-            key={"trunk_" + i}
-            position={data.position.clone().add(new THREE.Vector3(0, 0.5, 0))} // Adjust position for trunk base
-            scale={data.scale}
-            rotation={[0, data.rotation, 0]}
-          />
-        ))}
-      </Instances>
-      {/* Instances for Leaves */}
-      <Instances castShadow limit={count} range={range * 2}> {/* Add castShadow */}
-        <coneGeometry args={[0.6, 1, 16]} />
-        <meshStandardMaterial color={leavesColor} />
-        {treeData.map((data, i) => (
-          <Instance
-            key={"leaves_" + i}
-            position={data.position.clone().add(new THREE.Vector3(0, 1.5, 0))} // Adjust position for leaves base
-            scale={data.scale}
-            rotation={[0, data.rotation, 0]}
-          />
-        ))}
-      </Instances>
-    </>
-  );
-}
+// Removed Trees function
 
 
 function App() {
   const ufoRef = useRef<THREE.Group>(null!);
   const controlsRef = useRef<any>(null!);
-  const [isDaytime, setIsDaytime] = useState(true); // State for day/night
+  const [isDaytime] = useState(true); // Removed setIsDaytime, kept isDaytime
 
   // Example sun position for daytime Sky
   const sunPosition = useMemo(() => new THREE.Vector3(100, 50, 100), []);

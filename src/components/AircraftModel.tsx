@@ -1,5 +1,4 @@
 import React from 'react';
-import * as THREE from 'three';
 
 // Enhanced UFO model using basic shapes
 export function AircraftModel() {
