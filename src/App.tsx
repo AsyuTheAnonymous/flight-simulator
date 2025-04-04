@@ -6,18 +6,9 @@ import * as THREE from 'three';
 import UFOComponent from './components/Plane';
 import { Tree } from './components/Tree';
 // import { ChaseCamera } from './components/ChaseCamera';
+import { ManualCameraOffset } from './components/ManualCameraOffset'; // Import new component
 
-// Re-add ControlsUpdater component
-function ControlsUpdater({ controlsRef, targetRef }: { controlsRef: React.RefObject<any>, targetRef: React.RefObject<THREE.Group> }) {
-  useFrame(() => {
-    if (controlsRef.current && targetRef.current) {
-      // Update the target of OrbitControls to the plane's position
-      controlsRef.current.target.copy(targetRef.current.position);
-      controlsRef.current.update();
-    }
-  });
-  return null;
-}
+// Remove ControlsUpdater component definition
 
 // Component to render trees using instancing
 function Trees() {
@@ -44,9 +35,9 @@ function Trees() {
   return (
     <>
       {/* Instances for Trunks */}
-      <Instances limit={count} range={range * 2}>
-        <cylinderGeometry args={[0.1, 0.2, 1, 8]} /> {/* Trunk Geometry */}
-        <meshStandardMaterial color={trunkColor} /> {/* Trunk Material */}
+      <Instances castShadow limit={count} range={range * 2}> {/* Add castShadow */}
+        <cylinderGeometry args={[0.1, 0.2, 1, 8]} />
+        <meshStandardMaterial color={trunkColor} />
         {treeData.map((data, i) => (
           <Instance
             key={"trunk_" + i}
@@ -57,9 +48,9 @@ function Trees() {
         ))}
       </Instances>
       {/* Instances for Leaves */}
-      <Instances limit={count} range={range * 2}>
-        <coneGeometry args={[0.6, 1, 16]} /> {/* Leaves Geometry */}
-        <meshStandardMaterial color={leavesColor} /> {/* Leaves Material */}
+      <Instances castShadow limit={count} range={range * 2}> {/* Add castShadow */}
+        <coneGeometry args={[0.6, 1, 16]} />
+        <meshStandardMaterial color={leavesColor} />
         {treeData.map((data, i) => (
           <Instance
             key={"leaves_" + i}
@@ -82,26 +73,37 @@ function App() {
     // Remove cursor style
     <div style={{ width: '100vw', height: '100vh' }}>
       {/* Keep camera adjustments */}
-      <Canvas camera={{ position: [0, 5, 15], fov: 75 }}> {/* Revert initial camera pos */}
+      {/* Enable shadows on the Canvas */}
+      <Canvas shadows camera={{ position: [0, 5, 15], fov: 75 }}>
         {/* Set dark background color */}
         <color attach="background" args={['#050510']} />
         {/* Night Lighting */}
-        <ambientLight intensity={0.25} /> {/* Slightly increased ambient light */}
-        {/* Dim, cool directional light (moonlight) */}
-        <directionalLight position={[100, 50, 50]} intensity={0.3} color="#b0c4de" />
-        {/* Remove point light or keep it very dim if needed */}
-        {/* <pointLight position={[-10, -10, -10]} intensity={0.1} /> */}
+        <ambientLight intensity={0.25} />
+        {/* Configure directional light for shadows */}
+        <directionalLight
+          castShadow // Enable shadow casting
+          position={[100, 50, 50]}
+          intensity={0.3}
+          color="#b0c4de"
+          shadow-mapSize-width={1024} // Shadow map resolution (adjust for quality/performance)
+          shadow-mapSize-height={1024}
+          shadow-camera-far={150} // How far the shadow camera sees
+          shadow-camera-left={-50} // Shadow camera frustum size
+          shadow-camera-right={50}
+          shadow-camera-top={50}
+          shadow-camera-bottom={-50}
+        />
 
         {/* Starfield */}
         <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
 
         {/* Ground Plane - Darker color */}
         <DreiPlane
-          rotation={[-Math.PI / 2, 0, 0]} // Rotate to be horizontal
-          position={[0, -1, 0]} // Position slightly below the plane
-          args={[1000, 1000]} // Large size
+          receiveShadow // Enable shadow receiving
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, -1, 0]}
+          args={[1000, 1000]}
         >
-          {/* Darker ground color */}
           <meshStandardMaterial color="#3c443a" />
         </DreiPlane>
 
@@ -119,8 +121,8 @@ function App() {
           // enablePan={false} // Allow panning again
         />
 
-        {/* Add the component to update controls target */}
-        <ControlsUpdater controlsRef={controlsRef} targetRef={ufoRef} />
+        {/* Add the manual camera offset component */}
+        <ManualCameraOffset targetRef={ufoRef} controlsRef={controlsRef} />
       </Canvas>
     </div>
   );
