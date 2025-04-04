@@ -1,22 +1,11 @@
 import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber'; // Add useFrame back
-// Re-add OrbitControls, remove PointerLockControls
-import { OrbitControls, Stars, Plane as DreiPlane, Instances, Instance } from '@react-three/drei';
+// Remove PointerLockControls, keep Stars etc.
+import { Stars, Plane as DreiPlane, Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
-import UFOComponent from './components/Plane'; // Import the renamed component
+import UFOComponent from './components/Plane';
 import { Tree } from './components/Tree';
-
-// Re-add ControlsUpdater component
-function ControlsUpdater({ controlsRef, targetRef }: { controlsRef: React.RefObject<any>, targetRef: React.RefObject<THREE.Group> }) {
-  useFrame(() => {
-    if (controlsRef.current && targetRef.current) {
-      // Update the target of OrbitControls to the plane's position
-      controlsRef.current.target.copy(targetRef.current.position);
-      controlsRef.current.update();
-    }
-  });
-  return null;
-}
+import { ChaseCamera } from './components/ChaseCamera'; // Re-import ChaseCamera
 
 // Component to render trees using instancing
 function Trees() {
@@ -74,14 +63,13 @@ function Trees() {
 
 
 function App() {
-  const planeRef = useRef<THREE.Group>(null!); // Ref for the UFO
-  const controlsRef = useRef<any>(null!); // Ref for OrbitControls
+  const ufoRef = useRef<THREE.Group>(null!); // Re-add ufoRef
 
   return (
-    // Remove onClick and cursor style
+    // Remove cursor style
     <div style={{ width: '100vw', height: '100vh' }}>
       {/* Keep camera adjustments */}
-      <Canvas camera={{ position: [0, 5, 15], fov: 75 }}>
+      <Canvas camera={{ position: [0, 5, 15], fov: 75 }}> {/* Revert initial camera pos */}
         {/* Set dark background color */}
         <color attach="background" args={['#050510']} />
         {/* Night Lighting */}
@@ -108,18 +96,11 @@ function App() {
         <Trees />
 
         {/* Use the UFO component and pass the ref */}
-        <UFOComponent ref={planeRef} position={[0, 0.5, 0]} />
+        <UFOComponent ref={ufoRef} position={[0, 0.5, 0]} />
 
-        {/* Add OrbitControls back */}
-        <OrbitControls
-          ref={controlsRef}
-          minDistance={5}
-          maxDistance={50}
-          enablePan={false} // Keep panning disabled
-        />
-
-        {/* Add the component to update controls target */}
-        <ControlsUpdater controlsRef={controlsRef} targetRef={planeRef} />
+        {/* Add the ChaseCamera component */}
+        <ChaseCamera targetRef={ufoRef} />
+        {/* PointerLockControls removed */}
       </Canvas>
     </div>
   );

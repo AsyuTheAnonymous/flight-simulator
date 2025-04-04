@@ -1,21 +1,20 @@
 import { useEffect, useState, useMemo } from 'react';
-
-// Define interface for simple directional flags
-export interface DirectionalControls {
-  forward: boolean;
-  backward: boolean;
-  left: boolean;
-  right: boolean;
-  up: boolean;
-  down: boolean;
+// Import the FlightControls interface (assuming it exists in useFlightPhysics or define here)
+// Let's define it here for clarity if useFlightPhysics is removed/changed
+export interface FlightControls {
+  forwardMovement: number; // -1 (backward), 0, or 1 (forward)
+  roll: number; // -1, 0, or 1 (representing target direction)
+  pitch: number; // -1, 0, or 1
+  verticalMovement: number; // -1 (down), 0, or 1 (up)
 }
+
 
 interface KeyMap {
   [key: string]: boolean;
 }
 
-// Update hook name and return type
-export function useDirectionalControls(): DirectionalControls {
+// Revert hook name and return type
+export function useFlightControls(): FlightControls {
   const [movement, setMovement] = useState<KeyMap>({});
 
   useEffect(() => {
@@ -36,15 +35,14 @@ export function useDirectionalControls(): DirectionalControls {
     };
   }, []);
 
-  // Derive the boolean flags from the key map
-  const controls = useMemo((): DirectionalControls => {
+  // Derive the structured controls object from the key map
+  const controls = useMemo((): FlightControls => {
+    // Map keys back to the FlightControls structure
     return {
-      forward: !!movement['KeyW'],
-      backward: !!movement['KeyS'],
-      left: !!movement['KeyA'],
-      right: !!movement['KeyD'],
-      up: !!movement['KeyQ'], // Q for Up
-      down: !!movement['KeyE'], // E for Down
+      forwardMovement: movement['KeyW'] ? 1 : movement['KeyS'] ? -1 : 0,
+      roll: movement['KeyA'] ? 1 : movement['KeyD'] ? -1 : 0,
+      pitch: movement['ArrowUp'] ? 1 : movement['ArrowDown'] ? -1 : 0,
+      verticalMovement: movement['KeyQ'] ? 1 : movement['KeyE'] ? -1 : 0,
     };
   }, [movement]); // Recalculate only when movement state changes
 
